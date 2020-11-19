@@ -25,12 +25,12 @@ path = "/ws"
 allow_disconnected = false
 
 [signal.auth_connection]
-enabled = true 
+enabled = false
 key_type = "HMAC"  # this selects the Signing method https://godoc.org/github.com/dgrijalva/jwt-go#SigningMethod
 key = "1q2dGu5pzikcrECJgW3ADfXX3EsmoD99SYvSVCpDsJrAqxou5tUNbHPvkEFI4bTS"
 
 [signal.auth_room]
-enabled = true
+enabled = false
 key_type = "HMAC"
 key = "1q2dGu5pzikcrECJgW3ADfXX3EsmoD99SYvSVCpDsJrAqxou5tUNbHPvkEFI4bTS"
 
