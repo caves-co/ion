@@ -7,7 +7,7 @@ services:
       dockerfile: ./docker/sfu.Dockerfile
       context: .
     volumes:
-      - "./configs/docker/sfu.toml:/configs/sfu.toml"
+      - "./configs/docker/sfu_local.toml:/configs/sfu.toml"
     ports:
       - "5000-5200:5000-5200/udp"
     depends_on:
@@ -22,7 +22,7 @@ services:
       dockerfile: ./docker/biz.Dockerfile
       context: .
     volumes:
-      - "./configs/docker/biz.toml:/configs/biz.toml"
+      - "./configs/docker/biz_local.toml:/configs/biz.toml"
     ports:
       - 8443:8443
     networks:
@@ -37,25 +37,11 @@ services:
       dockerfile: ./docker/islb.Dockerfile
       context: .
     volumes:
-      - "./configs/docker/islb.toml:/configs/islb.toml"
+      - "./configs/docker/islb_local.toml:/configs/islb.toml"
     depends_on:
       - nats
       - etcd
       - redis
-    networks:
-      - ionnet
-
-  avp:
-    image: pionwebrtc/ion-avp:latest
-    build:
-      dockerfile: ./docker/avp.Dockerfile
-      context: .
-    volumes:
-      - "./configs/docker/avp.toml:/configs/avp.toml"
-      - "./:/out/"
-    depends_on:
-      - nats
-      - etcd
     networks:
       - ionnet
 

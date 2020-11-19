@@ -75,6 +75,7 @@ func authenticateRoom(msgType interface{}, connectionClaims *signal.Claims, auth
 
 // Entry is the biz entry
 func Entry(method string, peer *signal.Peer, msg json.RawMessage, claims *signal.Claims, accept signal.RespondFunc, reject signal.RejectFunc) {
+	log.Debugf("biz.Entry")
 	var result interface{}
 	topErr := util.NewNpError(http.StatusBadRequest, fmt.Sprintf("Unkown method [%s]", method))
 
@@ -82,6 +83,7 @@ func Entry(method string, peer *signal.Peer, msg json.RawMessage, claims *signal
 	switch method {
 	case proto.ClientJoin:
 		var msgData proto.JoinMsg
+		log.Debugf("join: %v", msgData)
 		if topErr = ParseProtoo(msg, claims, &msgData); topErr == nil {
 			result, topErr = join(peer, msgData)
 		}
