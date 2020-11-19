@@ -13,7 +13,7 @@ level = "debug"
 
 [etcd]
 # ["ip:port", "ip:port"]
-addrs = ["etcd:2379"]
+addrs = ["caves-ion-etcd-production:2379"]
 
 [signal]
 #listen ip port
@@ -36,5 +36,5 @@ key = "1q2dGu5pzikcrECJgW3ADfXX3EsmoD99SYvSVCpDsJrAqxou5tUNbHPvkEFI4bTS"
 
 
 [nats]
-url = "nats://nats:4222"
+url = "nats://caves-ion-nats-production:4222"
 

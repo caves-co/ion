@@ -51,7 +51,7 @@ level = "info"
 
 [etcd]
 # ["ip:port", "ip:port"]
-addrs = ["etcd:2379"]
+addrs = ["caves-ion-etcd-production:2379"]
 
 [nats]
-url = "nats://nats:4222"
+url = "nats://caves-ion-nats:4222"
