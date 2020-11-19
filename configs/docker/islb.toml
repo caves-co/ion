@@ -9,12 +9,12 @@ level = "info"
 
 [etcd]
 # ["ip:port", "ip:port"]
-addrs = ["livespot-ion-etcd-production:2379"]
+addrs = ["caves-ion-etcd-production:2379"]
 
 [nats]
-url = "nats://livespot-ion-nats-production:4222"
+url = "nats://caves-ion-nats-production:4222"
 
 [redis]
-addrs = ["livespot-ion-redis-production:6379"]
+addrs = ["caves-ion-redis-production:6379"]
 password = ""
 db = 0
