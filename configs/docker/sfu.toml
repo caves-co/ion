@@ -54,4 +54,4 @@ level = "info"
 addrs = ["caves-ion-etcd-production:2379"]
 
 [nats]
-url = "nats://caves-ion-nats:4222"
+url = "nats://caves-ion-nats-production:4222"
