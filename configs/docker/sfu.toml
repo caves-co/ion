@@ -1,5 +1,5 @@
 [global]
-pprof = ":6062"
+#pprof = ":6062"
 
 # data center id
 dc = "dc1"
@@ -51,7 +51,7 @@ level = "info"
 
 [etcd]
 # ["ip:port", "ip:port"]
-addrs = ["caves-ion-etcd-production:2379"]
+addrs = ["livespot-ion-etcd-production:2379"]
 
 [nats]
-url = "nats://caves-ion-nats-production:4222"
+url = "nats://livespot-ion-nats-production:4222"
