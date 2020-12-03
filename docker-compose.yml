@@ -56,15 +56,57 @@ services:
     image: gcr.io/etcd-development/etcd:v3.4.9
     entrypoint: "/usr/local/bin/etcd"
     command: "--listen-client-urls http://0.0.0.0:2379 --advertise-client-urls http://0.0.0.0:2379"
+    expose:
+      - 2379
     ports:
       - 2389:2379
+      - 8011:2379
+      - 8012:2380
     networks:
       - ionnet
 
   redis:
     image: redis:5.0.9
+    container_name: redis
+    hostname: redis
+    expose:
+      - 6379
     ports:
       - 6380:6379
+      - 6379:6379
+    networks:
+      - ionnet
+
+  redis_commander:
+    image: "rediscommander/redis-commander"
+    restart: always
+    depends_on:
+      - redis
+    environment:
+    - REDIS_HOST=redis
+    ports:
+      - "8085:8081"
+    networks:
+      - ionnet
+
+  # etcd_browser:
+  #   image: buddho/etcd-browser
+  #   ports:
+  #     - 8006:8000
+  #   depends_on:
+  #     - etcd
+  #   environment:
+  #     ETCD_HOST: "localhost"
+  #     ETCD_PORT: "2389"
+  #   networks:
+  #     - ionnet
+
+  etcd_lucas:
+    image: registry.cn-hangzhou.aliyuncs.com/ringtail/lucas:0.0.2
+    environment:
+      ENDPOINTS: "http://etcd:2379"
+    ports:
+      - 8088:8080
     networks:
       - ionnet
 
