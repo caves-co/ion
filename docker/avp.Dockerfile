@@ -1,4 +1,4 @@
-FROM golang:1.14.8-stretch
+FROM golang:1.14.12-stretch
 
 ENV GO111MODULE=on
 
@@ -13,7 +13,7 @@ COPY cmd/ $GOPATH/src/github.com/pion/ion/cmd
 WORKDIR $GOPATH/src/github.com/pion/ion/cmd/avp
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /avp .
 
-FROM alpine:3.12.0
+FROM alpine:3.12.1
 
 RUN apk --no-cache add ca-certificates
 COPY --from=0 /avp /usr/local/bin/avp
