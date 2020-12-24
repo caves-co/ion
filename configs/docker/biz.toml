@@ -36,4 +36,4 @@ key = "1q2dGu5pzikcrECJgW3ADfXX3EsmoD99SYvSVCpDsJrAqxou5tUNbHPvkEFI4bTS"
 url = "nats://caves-ion-nats-production:4222"
 
 [avp]
-elements = []
+elements = ["webmsaver"]
