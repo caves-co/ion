@@ -15,6 +15,6 @@ addrs = ["caves-ion-etcd-production:2379"]
 url = "nats://caves-ion-nats-production:4222"
 
 [redis]
-addrs = ["caves-ion-redis-production:6379"]
+addrs = ["caves-ion-redis-v2-production:6379"]
 password = ""
 db = 0
