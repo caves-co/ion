@@ -18,10 +18,9 @@ addrs = ["caves-ion-etcd-production:2379"]
 #listen ip port
 host = "0.0.0.0"
 port = "8443"
-# cert= "/configs/certs/cert.pem"
-# key= "/configs/certs/key.pem"
+# cert= "configs/certs/cert.pem"
+# key= "configs/certs/key.pem"
 path = "/ws"
-allow_disconnected = false
 
 [signal.auth_connection]
 enabled = false
@@ -33,6 +32,8 @@ enabled = false
 key_type = "HMAC"
 key = "1q2dGu5pzikcrECJgW3ADfXX3EsmoD99SYvSVCpDsJrAqxou5tUNbHPvkEFI4bTS"
 
-
 [nats]
 url = "nats://caves-ion-nats-production:4222"
+
+[avp]
+elements = ["webmsaver"]

@@ -15,54 +15,68 @@ const (
 	ClientSubscribe   = "subscribe"
 	ClientUnSubscribe = "unsubscribe"
 	ClientBroadcast   = "broadcast"
-	ClientTrickleICE  = "trickle"
+	ClientTrickle     = "trickle"
+	ClientOffer       = "offer"
+	ClientAnswer      = "answer"
 
 	// ion to client
 	ClientOnJoin         = "peer-join"
 	ClientOnLeave        = "peer-leave"
+	ClientOnList         = "peer-list"
 	ClientOnStreamAdd    = "stream-add"
 	ClientOnStreamRemove = "stream-remove"
+	ClientOnOffer        = "offer"
+	ClientOnAnswer       = "answer"
 
 	// ion to islb
-	IslbFindService  = "findService"
-	IslbGetPubs      = "getPubs"
-	IslbGetMediaInfo = "getMediaInfo"
-	IslbRelay        = "relay"
-	IslbUnrelay      = "unRelay"
+	IslbFindNode = "find-node"
+	IslbRelay    = "relay"
+	IslbUnrelay  = "unRelay"
 
-	IslbKeepAlive      = "keepAlive"
-	IslbClientOnJoin   = ClientOnJoin
-	IslbClientOnLeave  = ClientOnLeave
-	IslbOnStreamAdd    = ClientOnStreamAdd
-	IslbOnStreamRemove = ClientOnStreamRemove
-	IslbOnBroadcast    = ClientBroadcast
+	IslbKeepAlive = "keepAlive"
+	IslbPeerJoin  = ClientOnJoin
+	IslbPeerLeave = ClientOnLeave
+	IslbStreamAdd = ClientOnStreamAdd
+	IslbBroadcast = ClientBroadcast
 
 	// SFU Endpoints
-	SFUTrickleICE   = ClientTrickleICE
-	SFUStreamRemove = ClientOnStreamRemove
+	SfuTrickleICE    = ClientTrickle
+	SfuClientJoin    = ClientJoin
+	SfuClientOffer   = ClientOnOffer
+	SfuClientAnswer  = ClientOnAnswer
+	SfuClientTrickle = ClientTrickle
+	SfuClientLeave   = ClientLeave
 
-	IslbID = "islb"
+	// avp
+	AvpProcess = "avp-process"
+
+	ServiceISLB = "islb"
+	ServiceBIZ  = "biz"
+	ServiceSFU  = "sfu"
+	ServiceAVP  = "avp"
 )
 
 type MID string
 type RID string
 type UID string
 
-/*
-media
-dc/${nid}/${rid}/${uid}/media/pub/${mid}
-
-node1 origin
-node2 shadow
-msid  [{ssrc: 1234, pt: 111, type:audio}]
-msid  [{ssrc: 5678, pt: 96, type:video}]
-*/
+// MediaInfo media detailed information
+// dc/${nid}/${rid}/${uid}/media/pub/${mid}
+// node1 origin
+// node2 shadow
+// msid  [{ssrc: 1234, pt: 111, type:audio}]
+// msid  [{ssrc: 5678, pt: 96, type:video}]
 type MediaInfo struct {
-	DC  string `json:"dc,omitempty"`  //Data Center ID
-	NID string `json:"nid,omitempty"` //Node ID
-	RID RID    `json:"rid,omitempty"` //Room ID
-	UID UID    `json:"uid,omitempty"` //User ID
-	MID MID    `json:"mid,omitempty"` //Media ID
+	// DC data center id
+	DC string `json:"dc,omitempty"`
+	// NID node id
+	NID string `json:"nid,omitempty"`
+	// RID room id
+	RID RID `json:"rid,omitempty"`
+	// UID user id
+	UID UID `json:"uid,omitempty"`
+	// MID media id
+	MID MID `json:"mid,omitempty"`
 }
 
 func (m MediaInfo) BuildKey() string {
@@ -113,7 +127,11 @@ type UserInfo struct {
 }
 
 func (u UserInfo) BuildKey() string {
-	strs := []string{u.DC, string(u.RID), "user", "info", string(u.UID)}
+	uid := string(u.UID)
+	if uid == "" {
+		uid = "*"
+	}
+	strs := []string{u.DC, string(u.RID), "user", "info", uid}
 	return strings.Join(strs, "/")
 }
 
@@ -193,4 +211,9 @@ func GetPubMediaPath(rid, mid string, ssrc uint32) string {
 
 func GetPubMediaPathKey(rid string) string {
 	return rid + "/media/pub/"
+}
+
+// ISLB return islb subject
+func ISLB(dc string) string {
+	return "/" + dc + "/" + ServiceISLB
 }

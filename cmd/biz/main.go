@@ -1,55 +1,91 @@
 package main
 
 import (
-	"net/http"
+	"flag"
+	"fmt"
 	_ "net/http/pprof"
+	"os"
+	sig "os/signal"
+	"syscall"
 
-	conf "github.com/pion/ion/pkg/conf/biz"
-	"github.com/pion/ion/pkg/discovery"
-	"github.com/pion/ion/pkg/log"
+	log "github.com/pion/ion-log"
 	"github.com/pion/ion/pkg/node/biz"
-	"github.com/pion/ion/pkg/signal"
+	"github.com/spf13/viper"
 )
 
-func init() {
-	log.Init(conf.Log.Level)
-	signal.Init(signal.WebSocketServerConfig{
-		Host:           conf.Signal.Host,
-		Port:           conf.Signal.Port,
-		CertFile:       conf.Signal.Cert,
-		KeyFile:        conf.Signal.Key,
-		WebSocketPath:  conf.Signal.WebSocketPath,
-		AuthConnection: conf.Signal.AuthConnection,
-	}, conf.Signal.AllowDisconnected, biz.Entry)
+var (
+	conf = biz.Config{}
+	file string
+)
+
+func showHelp() {
+	fmt.Printf("Usage:%s {params}\n", os.Args[0])
+	fmt.Println("      -c {config file}")
+	fmt.Println("      -h (show help info)")
 }
 
-func close() {
-	biz.Close()
+func load() bool {
+	_, err := os.Stat(file)
+	if err != nil {
+		return false
+	}
+
+	viper.SetConfigFile(file)
+	viper.SetConfigType("toml")
+
+	err = viper.ReadInConfig()
+	if err != nil {
+		fmt.Printf("config file %s read failed. %v\n", file, err)
+		return false
+	}
+
+	err = viper.UnmarshalExact(&conf)
+	if err != nil {
+		fmt.Printf("config file %s loaded failed. %v\n", file, err)
+		return false
+	}
+
+	fmt.Printf("config %s load ok!\n", file)
+
+	return true
+}
+
+func parse() bool {
+	flag.StringVar(&file, "c", "conf/conf.toml", "config file")
+	help := flag.Bool("h", false, "help info")
+	flag.Parse()
+	if !load() {
+		return false
+	}
+
+	if *help {
+		showHelp()
+		return false
+	}
+	return true
 }
 
 func main() {
-	log.Infof("--- Starting Biz Node ---")
-
-	if conf.Global.Pprof != "" {
-		go func() {
-			log.Infof("Start pprof on %s", conf.Global.Pprof)
-			err := http.ListenAndServe(conf.Global.Pprof, nil)
-			if err != nil {
-				panic(err)
-			}
-		}()
+	if !parse() {
+		showHelp()
+		os.Exit(-1)
 	}
 
-	serviceNode := discovery.NewServiceNode(conf.Etcd.Addrs, conf.Global.Dc)
-	serviceNode.RegisterNode("biz", "node-biz", "biz-channel-id")
+	fixByFile := []string{"asm_amd64.s", "proc.go"}
+	fixByFunc := []string{}
+	log.Init(conf.Log.Level, fixByFile, fixByFunc)
 
-	rpcID := serviceNode.GetRPCChannel()
-	eventID := serviceNode.GetEventChannel()
-	biz.Init(conf.Global.Dc, serviceNode.NodeInfo().ID, rpcID, eventID, conf.Nats.URL, conf.Signal.AuthRoom)
+	log.Infof("--- starting biz node ---")
 
-	serviceWatcher := discovery.NewServiceWatcher(conf.Etcd.Addrs, conf.Global.Dc)
-	go serviceWatcher.WatchServiceNode("islb", biz.WatchServiceNodes)
+	node := biz.NewBIZ()
+	if err := node.Start(conf); err != nil {
+		log.Errorf("biz start error: %v", err)
+		os.Exit(-1)
+	}
+	defer node.Close()
 
-	defer close()
-	select {}
+	// Press Ctrl+C to exit the process
+	ch := make(chan os.Signal, 1)
+	sig.Notify(ch, os.Interrupt, syscall.SIGTERM)
+	<-ch
 }

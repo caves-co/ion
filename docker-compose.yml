@@ -1,8 +1,22 @@
 version: "3.7"
 
 services:
+  islb:
+    image: pionwebrtc/ion:latest-islb
+    build:
+      dockerfile: ./docker/islb.Dockerfile
+      context: .
+    volumes:
+      - "./configs/docker/islb_local.toml:/configs/islb.toml"
+    depends_on:
+      - nats
+      - etcd
+      - redis
+    networks:
+      - ionnet
+
   sfu:
-    image: pionwebrtc/ion-sfu:latest
+    image: pionwebrtc/ion:latest-sfu
     build:
       dockerfile: ./docker/sfu.Dockerfile
       context: .
@@ -16,8 +30,22 @@ services:
     networks:
       - ionnet
 
+  avp:
+    image: pionwebrtc/ion:latest-avp
+    build:
+      dockerfile: ./docker/avp.Dockerfile
+      context: .
+    volumes:
+      - "./configs/docker/avp.toml:/configs/avp.toml"
+      - "./out:/out/"
+    depends_on:
+      - nats
+      - etcd
+    networks:
+      - ionnet
+
   biz:
-    image: pionwebrtc/ion-biz:latest
+    image: pionwebrtc/ion:latest-biz
     build:
       dockerfile: ./docker/biz.Dockerfile
       context: .
@@ -25,35 +53,21 @@ services:
       - "./configs/docker/biz_local.toml:/configs/biz.toml"
     ports:
       - 8443:8443
-    networks:
-      - ionnet
     depends_on:
       - nats
       - etcd
-
-  islb:
-    image: pionwebrtc/ion-islb:latest
-    build:
-      dockerfile: ./docker/islb.Dockerfile
-      context: .
-    volumes:
-      - "./configs/docker/islb_local.toml:/configs/islb.toml"
-    depends_on:
-      - nats
-      - etcd
-      - redis
     networks:
       - ionnet
 
   nats:
     image: nats
     ports:
-      - 4223:4222
+      - 4222:4222
     networks:
       - ionnet
 
   etcd:
-    image: gcr.io/etcd-development/etcd:v3.4.9
+    image: gcr.io/etcd-development/etcd:v3.4.14
     entrypoint: "/usr/local/bin/etcd"
     command: "--listen-client-urls http://0.0.0.0:2379 --advertise-client-urls http://0.0.0.0:2379"
     expose:
@@ -66,7 +80,7 @@ services:
       - ionnet
 
   redis:
-    image: redis:5.0.9
+    image: redis:6.0.9
     container_name: redis
     hostname: redis
     expose:
@@ -88,18 +102,6 @@ services:
       - "8085:8081"
     networks:
       - ionnet
-
-  # etcd_browser:
-  #   image: buddho/etcd-browser
-  #   ports:
-  #     - 8006:8000
-  #   depends_on:
-  #     - etcd
-  #   environment:
-  #     ETCD_HOST: "localhost"
-  #     ETCD_PORT: "2389"
-  #   networks:
-  #     - ionnet
 
   etcd_lucas:
     image: registry.cn-hangzhou.aliyuncs.com/ringtail/lucas:0.0.2

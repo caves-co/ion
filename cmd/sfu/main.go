@@ -1,87 +1,110 @@
 package main
 
 import (
-	"net/http"
+	"flag"
+	"fmt"
 	_ "net/http/pprof"
+	"os"
+	"os/signal"
+	"syscall"
 
-	conf "github.com/pion/ion/pkg/conf/sfu"
-	"github.com/pion/ion/pkg/discovery"
-	"github.com/pion/ion/pkg/log"
+	log "github.com/pion/ion-log"
 	"github.com/pion/ion/pkg/node/sfu"
-	"github.com/pion/ion/pkg/rtc"
-	"github.com/pion/ion/pkg/rtc/plugins"
-	"github.com/pion/webrtc/v2"
+	"github.com/spf13/viper"
 )
 
-func init() {
-	var icePortStart, icePortEnd uint16
+const (
+	portRangeLimit = 100
+)
 
-	if len(conf.WebRTC.ICEPortRange) == 2 {
-		icePortStart = conf.WebRTC.ICEPortRange[0]
-		icePortEnd = conf.WebRTC.ICEPortRange[1]
-	}
+var (
+	conf = sfu.Config{}
+	file string
+)
 
-	log.Init(conf.Log.Level)
-	var iceServers []webrtc.ICEServer
-	for _, iceServer := range conf.WebRTC.ICEServers {
-		s := webrtc.ICEServer{
-			URLs:       iceServer.URLs,
-			Username:   iceServer.Username,
-			Credential: iceServer.Credential,
-		}
-		iceServers = append(iceServers, s)
-	}
-	if err := rtc.InitIce(iceServers, icePortStart, icePortEnd); err != nil {
-		panic(err)
-	}
+func showHelp() {
+	fmt.Printf("Usage:%s {params}\n", os.Args[0])
+	fmt.Println("      -c {config file}")
+	fmt.Println("      -h (show help info)")
+}
 
-	if err := rtc.InitRTP(conf.Rtp.Port, conf.Rtp.KcpKey, conf.Rtp.KcpSalt); err != nil {
-		panic(err)
+func unmarshal(rawVal interface{}) bool {
+	if err := viper.Unmarshal(rawVal); err != nil {
+		fmt.Printf("config file %s loaded failed. %v\n", file, err)
+		return false
 	}
+	return true
+}
 
-	pluginConfig := plugins.Config{
-		On: conf.Plugins.On,
-		JitterBuffer: plugins.JitterBufferConfig{
-			On:            conf.Plugins.JitterBuffer.On,
-			TCCOn:         conf.Plugins.JitterBuffer.TCCOn,
-			REMBCycle:     conf.Plugins.JitterBuffer.REMBCycle,
-			PLICycle:      conf.Plugins.JitterBuffer.PLICycle,
-			MaxBandwidth:  conf.Plugins.JitterBuffer.MaxBandwidth,
-			MaxBufferTime: conf.Plugins.JitterBuffer.MaxBufferTime,
-		},
-		RTPForwarder: plugins.RTPForwarderConfig{
-			On:      conf.Plugins.RTPForwarder.On,
-			Addr:    conf.Plugins.RTPForwarder.Addr,
-			KcpKey:  conf.Plugins.RTPForwarder.KcpKey,
-			KcpSalt: conf.Plugins.RTPForwarder.KcpSalt,
-		},
+func load() bool {
+	_, err := os.Stat(file)
+	if err != nil {
+		return false
 	}
 
-	if err := rtc.CheckPlugins(pluginConfig); err != nil {
-		panic(err)
+	viper.SetConfigFile(file)
+	viper.SetConfigType("toml")
+
+	err = viper.ReadInConfig()
+	if err != nil {
+		fmt.Printf("config file %s read failed. %v\n", file, err)
+		return false
 	}
-	rtc.InitPlugins(pluginConfig)
-	rtc.InitRouter(*conf.Router)
+
+	if !unmarshal(&conf) || !unmarshal(&conf.Config) {
+		return false
+	}
+
+	if len(conf.WebRTC.ICEPortRange) > 2 {
+		fmt.Printf("config file %s loaded failed. range port must be [min,max]\n", file)
+		return false
+	}
+
+	if len(conf.WebRTC.ICEPortRange) != 0 && conf.WebRTC.ICEPortRange[1]-conf.WebRTC.ICEPortRange[0] < portRangeLimit {
+		fmt.Printf("config file %s loaded failed. range port must be [min, max] and max - min >= %d\n", file, portRangeLimit)
+		return false
+	}
+
+	fmt.Printf("config %s load ok!\n", file)
+	return true
+}
+
+func parse() bool {
+	flag.StringVar(&file, "c", "conf/conf.toml", "config file")
+	help := flag.Bool("h", false, "help info")
+	flag.Parse()
+	if !load() {
+		return false
+	}
+
+	if *help {
+		showHelp()
+		return false
+	}
+	return true
 }
 
 func main() {
-	log.Infof("--- Starting SFU Node ---")
-
-	if conf.Global.Pprof != "" {
-		go func() {
-			log.Infof("Start pprof on %s", conf.Global.Pprof)
-			err := http.ListenAndServe(conf.Global.Pprof, nil)
-			if err != nil {
-				log.Errorf("http.ListenAndServe err=%v", err)
-			}
-		}()
+	if !parse() {
+		showHelp()
+		os.Exit(-1)
 	}
 
-	serviceNode := discovery.NewServiceNode(conf.Etcd.Addrs, conf.Global.Dc)
-	serviceNode.RegisterNode("sfu", "node-sfu", "sfu-channel-id")
+	fixByFile := []string{"asm_amd64.s", "proc.go", "icegatherer.go"}
+	fixByFunc := []string{}
+	log.Init(conf.Log.Level, fixByFile, fixByFunc)
 
-	rpcID := serviceNode.GetRPCChannel()
-	eventID := serviceNode.GetEventChannel()
-	sfu.Init(conf.Global.Dc, serviceNode.NodeInfo().Info["id"], rpcID, eventID, conf.Nats.URL)
-	select {}
+	log.Infof("--- starting sfu node ---")
+
+	node := sfu.NewSFU()
+	if err := node.Start(conf); err != nil {
+		log.Errorf("sfu init start: %v", err)
+		os.Exit(-1)
+	}
+	defer node.Close()
+
+	// Press Ctrl+C to exit the process
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+	<-ch
 }
