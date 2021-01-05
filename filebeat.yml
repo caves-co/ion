@@ -8,7 +8,7 @@ filebeat.inputs:
     logzio_codec: utf-8
     token: uytUahyAZQqNbDkcoeANpMQoiqAxwvGM
     type: ion_new
-  fields_under_root: false
+  fields_under_root: true
   encoding: utf-8
   ignore_older: 3h
 
