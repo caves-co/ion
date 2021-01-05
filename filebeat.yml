@@ -6,7 +6,7 @@ filebeat.inputs:
     - /var/log/ion.log
   fields:
     logzio_codec: plain
-    type: ion
+    type: ion_new
     service_name: ${SERVICE_NAME:unknown}
   fields_under_root: true
   encoding: utf-8
