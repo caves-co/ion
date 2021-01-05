@@ -14,9 +14,7 @@ WORKDIR $GOPATH/src/github.com/pion/ion/cmd/biz/json-rpc
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /biz .
 
 FROM ubuntu:18.04
-
 COPY --from=0 /biz /usr/local/bin/biz
-
 COPY configs/docker/biz.toml /configs/biz.toml
 
 # logging
