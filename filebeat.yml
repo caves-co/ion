@@ -32,4 +32,6 @@ processors:
 
 output:
   logstash:
-    hosts: ["livespot-syslog-master:5115"]
+    hosts: ["listener.logz.io:5015"]
+    ssl:
+      certificate_authorities: ['/etc/pki/tls/certs/COMODORSADomainValidationSecureServerCA.crt']
