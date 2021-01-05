@@ -31,3 +31,4 @@ processors:
 output:
   logstash:
     hosts: ["livespot-syslog-master:5115"]
+    compression_level: 0
