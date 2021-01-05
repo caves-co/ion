@@ -8,7 +8,6 @@ filebeat.inputs:
     logzio_codec: plain
     token: uytUahyAZQqNbDkcoeANpMQoiqAxwvGM
     type: ion_new
-    service_name: ${SERVICE_NAME:unknown}
   encoding: utf-8
   ignore_older: 3h
 
@@ -25,9 +24,6 @@ processors:
      - from: "agent"
        to: "beat_agent"
     ignore_missing: false
-- add_tags:
-    tags: "${SERVICE_NAME:unknown}"
-    target: "service_name"
 
 ############################# Output ##########################################
 
