@@ -23,7 +23,10 @@ processors:
     fields:
      - from: "agent"
        to: "beat_agent"
-    ignore_missing: true
+    ignore_missing: false
+- add_tags:
+    tags: "${SERVICE_NAME:unknown}"
+    target: "service_name"
 
 ############################# Output ##########################################
 
