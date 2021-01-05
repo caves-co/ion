@@ -8,7 +8,7 @@ filebeat.inputs:
     logzio_codec: plain
     type: ion_new
     service_name: ${SERVICE_NAME:unknown}
-  encoding: utf-8
+  encoding: plain
   ignore_older: 3h
 
 #For version 6.x and lower
