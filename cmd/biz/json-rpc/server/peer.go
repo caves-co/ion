@@ -109,6 +109,9 @@ func (p *Peer) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Re
 			replyError(err)
 		}
 
+	case 'ping':
+		break
+
 	case proto.ClientBroadcast:
 		var msg proto.FromClientBroadcastMsg
 		if err := p.unmarshal(*req.Params, &msg); err != nil {
